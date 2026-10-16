@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fff8f1" />
+    <meta name="description" content="내 기록을 이해하는 다정한 운동 비서, 일어나" />
+    <title>일어나 — AI 운동 비서</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div id="auth-view" class="auth-shell">
+      <section class="welcome-panel" aria-labelledby="welcome-title">
+        <div class="sun-mark" aria-hidden="true"><span></span></div>
+        <p class="eyebrow">AI 운동 비서</p>
+        <h1 id="welcome-title">일어나</h1>
+        <p class="welcome-copy">내 기록을 이해하고, 오늘 할 수 있는 만큼만 다정하게 제안해요.</p>
+        <button id="google-sign-in" class="button button-primary button-wide" type="button">
+          <span class="google-dot" aria-hidden="true">G</span> Google로 시작하기
+        </button>
+        <button id="demo-sign-in" class="button button-ghost button-wide hidden" type="button">로컬 데모로 시작</button>
+        <p class="privacy-note">운동 기록은 로그인한 본인만 볼 수 있어요.</p>
+      </section>
+    </div>
+
+    <div id="app-view" class="app-shell hidden">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">오늘도 가볍게</p>
+          <h1>일어나</h1>
+        </div>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="다크 모드 전환">◐</button>
+      </header>
+
+      <main id="main-content">
+        <section id="page-home" class="page active" data-page="home" aria-labelledby="home-title">
+          <div id="weight-reminder" class="notice notice-soft hidden">
+            <div>
+              <strong>이번 주 체중을 기록하시겠어요?</strong>
+              <p>원하지 않으면 건너뛰어도 괜찮아요.</p>
+            </div>
+            <div class="button-row">
+              <button class="button button-small" data-open-weight type="button">지금 기록</button>
+              <button id="dismiss-weight-reminder" class="button button-small button-quiet" type="button">이번 주 건너뛰기</button>
+            </div>
+          </div>
+
+          <div class="section-heading">
+            <div><p class="eyebrow">나의 흐름</p><h2 id="home-title">이번 주 움직임</h2></div>
+            <span id="period-label" class="chip">기록 없음</span>
+          </div>
+
+          <article class="goal-card">
+            <div class="goal-copy">
+              <span>오늘의 걸음 목표</span>
+              <strong><span id="step-goal">—</span>보</strong>
+              <p id="goal-caption">기록이 쌓이면 무리 없는 목표를 추천할게요.</p>
+            </div>
+            <div class="goal-ring" aria-hidden="true"><span id="goal-percent">0%</span></div>
+          </article>
+
+          <div class="metric-grid" aria-live="polite">
+            <article class="metric"><span>최근 평균</span><strong id="average-steps">—</strong><small>걸음</small></article>
+            <article class="metric"><span>활동 기록</span><strong id="activity-count">0</strong><small>일</small></article>
+            <article class="metric"><span>최근 체중</span><strong id="latest-weight">—</strong><small>kg</small></article>
+          </div>
+
+          <article class="insight-strip">
+            <span class="insight-icon" aria-hidden="true">↗</span>
+            <div><strong>기록 인사이트</strong><p id="trend-text">활동 기록을 추가하면 추세를 알려드려요.</p></div>
+          </article>
+
+          <article class="chart-panel">
+            <div class="panel-title"><div><span>최근 기록</span><h3>걸음 수 변화</h3></div><button class="text-button" data-nav="records" type="button">기록 추가</button></div>
+            <div class="chart-wrap"><canvas id="steps-chart" aria-label="최근 걸음 수 차트"></canvas></div>
+          </article>
+
+          <article class="chart-panel">
+            <div class="panel-title"><div><span>체중 체크인</span><h3>체중 변화</h3></div><button class="text-button" data-open-weight type="button">체중 기록</button></div>
+            <div class="chart-wrap chart-short"><canvas id="weight-chart" aria-label="체중 변화 차트"></canvas></div>
+          </article>
+        </section>
+
+        <section id="page-records" class="page" data-page="records" aria-labelledby="records-title">
+          <div class="section-heading"><div><p class="eyebrow">간편 기록</p><h2 id="records-title">삼성 헬스에서 가져오기</h2></div></div>
+          <article class="upload-panel">
+            <label class="field-label" for="record-date">기록 날짜</label>
+            <input id="record-date" type="date" required />
+            <label id="image-drop" class="image-drop" for="health-image">
+              <input id="health-image" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
+              <span class="upload-symbol" aria-hidden="true">＋</span>
+              <strong>일일 활동 화면 한 장</strong>
+              <small>사진을 선택하거나 바로 촬영하세요</small>
+              <img id="image-preview" class="hidden" alt="선택한 삼성 헬스 화면 미리보기" />
+            </label>
+            <label class="consent-row">
+              <input id="image-consent" type="checkbox" />
+              <span>수치 추출을 위해 이 이미지가 OpenAI에서 일시 처리되는 것에 동의합니다.</span>
+            </label>
+            <button id="extract-image" class="button button-primary button-wide" type="button">사진에서 기록 읽기</button>
+          </article>
+
+          <form id="extraction-form" class="form-panel hidden">
+            <div class="panel-title"><div><span>저장 전 확인</span><h3>숫자가 맞는지 봐주세요</h3></div><span id="extraction-confidence" class="chip">확인 필요</span></div>
+            <div class="form-grid">
+              <label>걸음 수<input id="extract-steps" type="number" min="0" max="200000" required /></label>
+              <label>활동 시간(분)<input id="extract-minutes" type="number" min="0" max="1440" required /></label>
+              <label>활동 칼로리<input id="extract-calories" type="number" min="0" step="0.1" required /></label>
+              <label>이동 거리(km)<input id="extract-distance" type="number" min="0" step="0.01" required /></label>
+            </div>
+            <label>메모<input id="extract-memo" maxlength="500" placeholder="선택 사항" /></label>
+            <p id="extraction-warning" class="form-hint hidden"></p>
+            <button class="button button-primary button-wide" type="submit">이 기록 저장하기</button>
+          </form>
+
+          <div class="section-heading compact"><div><p class="eyebrow">내 데이터</p><h2>최근 기록</h2></div><button id="download-csv" class="button button-small button-quiet" type="button">CSV 받기</button></div>
+          <div id="record-list" class="record-list"><p class="empty-state">기록을 불러오는 중이에요.</p></div>
+        </section>
+
+        <section id="page-chat" class="page chat-page" data-page="chat" aria-labelledby="chat-title">
+          <div class="section-heading"><div><p class="eyebrow">기록 기반 대화</p><h2 id="chat-title">일어나에게 물어보기</h2></div></div>
+          <div id="chat-messages" class="chat-messages" aria-live="polite">
+            <div class="message assistant">최근 운동 기록을 바탕으로 궁금한 점을 물어보세요.</div>
+          </div>
+          <form id="chat-form" class="chat-composer">
+            <label class="sr-only" for="chat-input">메시지</label>
+            <textarea id="chat-input" rows="1" maxlength="1000" placeholder="최근 활동량이 어땠어?" required></textarea>
+            <button class="send-button" type="submit" aria-label="메시지 보내기">↑</button>
+          </form>
+        </section>
+
+        <section id="page-history" class="page" data-page="history" aria-labelledby="history-title">
+          <div class="section-heading"><div><p class="eyebrow">하나의 이어지는 대화</p><h2 id="history-title">대화 기록</h2></div><button id="clear-chat" class="button button-small button-danger" type="button">초기화</button></div>
+          <button id="current-conversation" class="conversation-item" type="button">
+            <span class="conversation-mark" aria-hidden="true">일</span>
+            <span><strong>현재 대화</strong><small id="conversation-updated">아직 대화가 없어요</small></span>
+            <span aria-hidden="true">›</span>
+          </button>
+          <div id="history-messages" class="history-messages"></div>
+        </section>
+
+        <section id="page-settings" class="page" data-page="settings" aria-labelledby="settings-title">
+          <div class="section-heading"><div><p class="eyebrow">나에게 맞게</p><h2 id="settings-title">설정</h2></div></div>
+          <form id="profile-form" class="form-panel settings-form">
+            <div class="form-grid">
+              <label>나이<input id="profile-age" type="number" min="19" max="100" required /></label>
+              <label>성별<select id="profile-sex" required><option value="prefer_not_to_say">선택 안 함</option><option value="female">여성</option><option value="male">남성</option></select></label>
+              <label>키(cm)<input id="profile-height" type="number" min="120" max="230" step="0.1" required /></label>
+              <label>현재 체중(kg)<input id="profile-weight" type="number" min="30" max="300" step="0.1" required /></label>
+              <label>목표 체중(kg)<input id="profile-target" type="number" min="30" max="300" step="0.1" required /></label>
+            </div>
+            <label id="low-bmi-confirm-row" class="consent-row hidden"><input id="low-bmi-confirm" type="checkbox" /><span>목표 체중이 일반적인 성인 범위보다 낮을 수 있음을 확인했습니다.</span></label>
+            <div id="bmi-guidance" class="notice notice-soft hidden"></div>
+            <button class="button button-primary button-wide" type="submit">프로필 저장</button>
+          </form>
+          <article class="settings-card">
+            <div><strong>AI 걸음 목표</strong><p id="settings-goal">아직 추천받지 않았어요.</p></div>
+            <button id="recommend-goal" class="button button-small" type="button">새 목표 추천</button>
+          </article>
+          <article id="pending-goal-card" class="settings-card accent hidden">
+            <div><strong><span id="pending-goal">—</span>보를 제안해요</strong><p id="pending-goal-reason"></p></div>
+            <button id="accept-goal" class="button button-small" type="button">적용</button>
+          </article>
+          <button id="sign-out" class="button button-quiet button-wide" type="button">로그아웃</button>
+          <button id="delete-account" class="text-danger" type="button">내 데이터와 계정 정보 삭제</button>
+          <p class="scope-note">일어나는 운동 기록 비서이며 의료 진단이나 치료를 제공하지 않습니다.</p>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="주요 메뉴">
+        <button class="nav-item active" data-nav="home" type="button"><span>⌂</span><small>홈</small></button>
+        <button class="nav-item" data-nav="records" type="button"><span>＋</span><small>기록</small></button>
+        <button class="nav-item nav-main" data-nav="chat" type="button"><span>✦</span><small>AI 채팅</small></button>
+        <button class="nav-item" data-nav="history" type="button"><span>◷</span><small>대화 기록</small></button>
+        <button class="nav-item" data-nav="settings" type="button"><span>⚙</span><small>설정</small></button>
+      </nav>
+    </div>
+
+    <dialog id="weight-dialog" class="dialog-card">
+      <form id="weight-form" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">가볍게 체크인</p><h2>체중 기록</h2></div><button class="icon-button" value="cancel" aria-label="닫기">×</button></div>
+        <label>날짜<input id="weight-date" type="date" required /></label>
+        <label>체중(kg)<input id="weight-value" type="number" min="30" max="300" step="0.1" required /></label>
+        <label>메모<input id="weight-memo" maxlength="500" placeholder="선택 사항" /></label>
+        <button class="button button-primary button-wide" value="default" type="submit">기록하기</button>
+      </form>
+    </dialog>
+
+    <div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="polite"><span class="loader"></span><p id="loading-text">잠시만 기다려 주세요.</p></div>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  </body>
+</html>

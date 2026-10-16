@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*service-account*.json
+firebase*.json
+*firebase-adminsdk*.json
+
+# Personal health exports and images
+*.zip
+*.csv
+*.jpg
+*.jpeg
+*.png
+personal-data/
+uploads/
+
+# Frontend runtime config and dependencies
+frontend/public/runtime-config.json
+node_modules/
+
+# Build and editor files
+.vercel/
+dist/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local evidence artifacts
+artifacts/
