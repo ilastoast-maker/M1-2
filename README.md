@@ -124,7 +124,7 @@ python scripts/import_samsung_health.py "C:\path\to\samsunghealth_export.zip" --
 | `OPENAI_BASE_URL` | OpenAI 호환 API 주소, 예: `http://coda.codyssey.kr/v1` (비우면 OpenAI 기본 주소) |
 | `OPENAI_MODEL` | 텍스트와 이미지 입력을 지원하는 모델, 기본 `gpt-5.5` |
 | `OPENAI_MAX_OUTPUT_TOKENS` | 응답 출력 제한(추론 토큰 포함), 기본 1000 |
-| `OPENAI_REASONING_EFFORT` | `low` 기본. 게이트웨이가 거부하면 빈 값 |
+| `OPENAI_REASONING_EFFORT` | 빈 값 기본. 게이트웨이가 지원할 경우 `low` / `medium` / `high` 설정 가능 |
 | `MAX_IMAGE_BYTES` | 이미지 최대 바이트, 기본 5MB |
 
 ### Vercel / 공개 웹 설정
@@ -216,18 +216,40 @@ conversations/{uid}/messages/{messageId}
 
 ## 제출 전 체크리스트
 
-- [ ] Vercel 프론트 URL
-- [ ] Render API URL
-- [ ] Render `/docs` URL
-- [ ] 100개 이상 실제 일일 활동 데이터 확인
-- [ ] 데이터 요약과 질문·답변이 함께 보이는 채팅 화면 캡처
-- [ ] 스크린샷 추출값 확인 또는 기록 삭제가 보이는 CRUD 화면 캡처
-- [ ] `현재 대화`를 선택해 메시지가 다시 표시되는 화면 캡처
-- [ ] 환경 변수에 비밀값이 있고 Git 기록에는 없는지 확인
-- [ ] 모바일 390×844와 데스크톱 1440×900 렌더링 확인
+- [x] Vercel 프론트 URL
+- [x] Render API URL
+- [x] Render `/docs` URL
+- [x] 100개 이상 실제 일일 활동 데이터 확인 (삼성 헬스 389일치 업로드 완료)
+- [x] 데이터 요약과 질문·답변이 함께 보이는 채팅 화면 캡처 → `docs/screenshots/chat.png`
+- [x] 스크린샷 추출값 확인 또는 기록 삭제가 보이는 CRUD 화면 캡처 → `docs/screenshots/records.png`
+- [x] `현재 대화`를 선택해 메시지가 다시 표시되는 화면 캡처 → `docs/screenshots/history.png`
+- [x] 환경 변수에 비밀값이 있고 Git 기록에는 없는지 확인
+- [x] 모바일 390×844와 데스크톱 1440×900 렌더링 확인
 
 ## 배포 URL
 
-- Frontend: 배포 후 입력
-- Backend API: 배포 후 입력
-- Swagger UI: 배포 후 입력
+- Frontend: https://m1-2-ebon.vercel.app/
+- Backend API: https://m1-2-bxwu.onrender.com
+- Swagger UI: https://m1-2-bxwu.onrender.com/docs
+
+## 스크린샷
+
+### 홈 — 이번 주 움직임 & 걸음 목표
+
+![홈 화면](docs/screenshots/home.png)
+
+### 기록 — 삼성 헬스 데이터 목록
+
+![기록 화면](docs/screenshots/records.png)
+
+### AI 채팅 — 데이터 요약 기반 대화
+
+![채팅 화면](docs/screenshots/chat.png)
+
+### 대화 기록 — 현재 대화 복원
+
+![대화 기록 화면](docs/screenshots/history.png)
+
+### 설정 — 프로필 & 목표 관리
+
+![설정 화면](docs/screenshots/settings.png)
