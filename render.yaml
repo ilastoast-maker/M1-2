@@ -21,7 +21,11 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_BASE_URL
+        value: http://coda.codyssey.kr/v1
       - key: OPENAI_MODEL
-        value: gpt-5-mini
+        value: gpt-5.5
       - key: OPENAI_MAX_OUTPUT_TOKENS
-        value: "500"
+        value: "1000"
+      - key: OPENAI_REASONING_EFFORT
+        value: low

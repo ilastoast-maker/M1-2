@@ -23,7 +23,7 @@
 
 - Backend: Python 3.11+, FastAPI, Pydantic v2, Firebase Admin SDK
 - Database/Auth: Firebase Authentication, Cloud Firestore
-- AI: OpenAI Responses API의 이미지 입력 및 Structured Outputs
+- AI: OpenAI 호환 Chat Completions API(코디세이 게이트웨이, `gpt-5.5`)의 이미지 입력 및 Structured Outputs
 - Frontend: Vanilla HTML, CSS, JavaScript, Chart.js
 - Deploy: Render(백엔드), Vercel(프론트엔드)
 
@@ -121,8 +121,10 @@ python scripts/import_samsung_health.py "C:\path\to\samsunghealth_export.zip" --
 | `FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | 서비스 계정 JSON 전체 문자열 |
 | `OPENAI_API_KEY` | 서버 전용 OpenAI API 키 |
-| `OPENAI_MODEL` | 텍스트와 이미지 입력을 지원하는 모델 |
-| `OPENAI_MAX_OUTPUT_TOKENS` | 응답 출력 제한, 기본 500 |
+| `OPENAI_BASE_URL` | OpenAI 호환 API 주소, 예: `http://coda.codyssey.kr/v1` (비우면 OpenAI 기본 주소) |
+| `OPENAI_MODEL` | 텍스트와 이미지 입력을 지원하는 모델, 기본 `gpt-5.5` |
+| `OPENAI_MAX_OUTPUT_TOKENS` | 응답 출력 제한(추론 토큰 포함), 기본 1000 |
+| `OPENAI_REASONING_EFFORT` | `low` 기본. 게이트웨이가 거부하면 빈 값 |
 | `MAX_IMAGE_BYTES` | 이미지 최대 바이트, 기본 5MB |
 
 ### Vercel / 공개 웹 설정
@@ -207,7 +209,6 @@ conversations/{uid}/messages/{messageId}
 
 - 업로드 이미지는 메모리에서 검증·재인코딩해 EXIF를 제거한 뒤 처리하고 저장하지 않습니다.
 - 이미지 안의 텍스트는 지시가 아닌 데이터로 취급합니다.
-- OpenAI 요청은 `store=false`로 전송합니다.
 - 이메일과 이름은 운동 프롬프트에 포함하지 않습니다.
 - AI 호출은 사용자별 시간당 제한을 적용합니다.
 - 실제 ZIP, 스크린샷, CSV, 키 파일은 `.gitignore`로 제외합니다.
