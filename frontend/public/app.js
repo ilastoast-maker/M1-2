@@ -372,7 +372,19 @@ function setupEvents() {
 
   $("#google-sign-in").addEventListener("click", async () => {
     try { await state.firebaseAuth.signInWithPopup(state.firebaseAuth.auth, state.firebaseAuth.provider); }
-    catch { toast("Google 로그인을 완료하지 못했습니다."); }
+    catch (error) {
+      console.error("Google sign-in failed", error);
+      const reasons = {
+        "auth/unauthorized-domain": "Firebase 승인된 도메인에 이 사이트 주소가 없어요.",
+        "auth/operation-not-allowed": "Firebase에서 Google 로그인이 사용 설정되지 않았어요.",
+        "auth/configuration-not-found": "Firebase Authentication이 아직 시작되지 않았어요.",
+        "auth/invalid-api-key": "Firebase 웹 API 키가 올바르지 않아요.",
+        "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Firebase 웹 API 키가 올바르지 않아요.",
+        "auth/popup-blocked": "브라우저가 로그인 팝업을 막았어요. 팝업을 허용해 주세요.",
+        "auth/popup-closed-by-user": "로그인 창이 닫혔어요.",
+      };
+      toast(`Google 로그인을 완료하지 못했습니다. ${reasons[error.code] || ""} (${error.code || error.message})`);
+    }
   });
 
   $("#sign-out").addEventListener("click", async () => {
