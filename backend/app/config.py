@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     openai_base_url: str | None = None
     openai_model: str = "gpt-5.5"
     openai_max_output_tokens: int = Field(default=1000, ge=100, le=4000)
-    openai_reasoning_effort: Literal["", "minimal", "low", "medium", "high"] = "low"
+    openai_reasoning_effort: Literal["", "minimal", "low", "medium", "high"] = ""
     max_image_bytes: int = Field(default=5 * 1024 * 1024, ge=1024, le=10 * 1024 * 1024)
 
     @property

@@ -27,4 +27,4 @@ services:
       - key: OPENAI_MAX_OUTPUT_TOKENS
         value: "1000"
       - key: OPENAI_REASONING_EFFORT
-        value: low
+        value: ""
