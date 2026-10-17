@@ -58,15 +58,23 @@ function endSlowRequestWatch() {
 }
 
 async function fetchWithRetry(url, options) {
+  const REQUEST_TIMEOUT_MS = 90_000;
   for (let attempt = 0; ; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
-      return await fetch(url, options);
+      return await fetch(url, { ...options, signal: controller.signal });
     } catch (error) {
       // 서버가 깨어나는 동안의 연결 실패만 재시도한다. HTTP 오류 응답은 그대로 돌려준다.
+      if (error.name === "AbortError") {
+        throw new Error("서버 응답 시간이 초과됐어요. Render 서버가 기동 중일 수 있으니 잠시 후 새로고침해 주세요.");
+      }
       if (attempt >= NETWORK_RETRY_DELAYS_MS.length) {
         throw new Error("서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.");
       }
       await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAYS_MS[attempt]));
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
