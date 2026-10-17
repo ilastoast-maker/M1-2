@@ -236,7 +236,7 @@ class FirestoreStore:
             return None
         metadata = snapshot.to_dict() or {}
         message_query = ref.collection("messages").order_by("created_at").limit_to_last(200)
-        metadata["messages"] = [message.to_dict() for message in message_query.stream()]
+        metadata["messages"] = [message.to_dict() for message in message_query.get()]
         return metadata
 
     def save_conversation(self, user_id: str, payload: dict[str, Any]) -> dict[str, Any]:
