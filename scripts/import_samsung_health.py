@@ -128,6 +128,8 @@ def main() -> int:
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
             print(f"{activity.day} 저장 실패: HTTP {exc.code} {detail}", file=sys.stderr)
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            print(f"{activity.day} 요청 응답을 확인하지 못했습니다 ({type(exc).__name__}). 건너뜁니다.", file=sys.stderr)
     print(f"저장 완료: {success}/{len(activities)}")
     return 0 if success == len(activities) else 2
 
