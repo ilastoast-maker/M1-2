@@ -395,6 +395,17 @@ function setupEvents() {
     }
   });
 
+  $("#copy-token").addEventListener("click", async () => {
+    if (!state.firebaseUser) { toast("먼저 로그인해 주세요."); return; }
+    try {
+      const token = await state.firebaseUser.getIdToken(true);
+      await navigator.clipboard.writeText(token);
+      toast("토큰이 클립보드에 복사됐어요. 1시간 후 만료됩니다.");
+    } catch {
+      toast("복사 실패 — 개발자 도구 콘솔에서 직접 복사해 주세요.");
+    }
+  });
+
   $("#sign-out").addEventListener("click", async () => {
     if (state.demo) { state.demo = false; setSignedIn(false); return; }
     await state.firebaseAuth.signOut(state.firebaseAuth.auth);
