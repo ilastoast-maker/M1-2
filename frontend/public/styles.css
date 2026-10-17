@@ -287,3 +287,20 @@ textarea { resize: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+.record-actions { display: flex; gap: 2px; }
+.edit-record { width: 38px; height: 38px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); }
+.edit-record:hover, .delete-record:hover { background: var(--surface-soft); color: var(--coral-dark); }
+
+.chat-summary { margin-bottom: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-soft); }
+.chat-summary .eyebrow { margin: 0 0 8px; }
+.chat-summary dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.chat-summary dt { color: var(--muted); font-size: 0.68rem; }
+.chat-summary dd { margin: 2px 0 0; font-size: 0.86rem; font-weight: 800; overflow-wrap: anywhere; }
+.chat-summary-trend { margin: 10px 0 0; color: var(--muted); font-size: 0.8rem; }
+
+.loading-hint { max-width: 300px; margin: 0; padding: 0 16px; color: var(--muted); font-size: 0.8rem; text-align: center; }
+
+@media (max-width: 430px) {
+  .chat-summary dl { grid-template-columns: 1fr 1fr; }
+}

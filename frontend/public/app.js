@@ -11,6 +11,7 @@ const state = {
   summary: null,
   conversation: null,
   pendingGoal: null,
+  editingId: null,
   charts: { steps: null, weight: null },
 };
 
@@ -26,7 +27,53 @@ function showLoading(message = "잠시만 기다려 주세요.") {
   $("#loading-overlay").classList.remove("hidden");
 }
 
-function hideLoading() { $("#loading-overlay").classList.add("hidden"); }
+function hideLoading() {
+  $("#loading-overlay").classList.add("hidden");
+  $("#loading-hint").classList.add("hidden");
+}
+
+// Render 무료 티어는 유휴 상태에서 잠들어 첫 요청이 30~60초 걸릴 수 있다.
+const COLD_START_NOTICE_MS = 4000;
+const COLD_START_MESSAGE = "서버가 잠에서 깨어나는 중이에요. 무료 서버라 첫 요청은 최대 1분 정도 걸릴 수 있어요.";
+const NETWORK_RETRY_DELAYS_MS = [3000, 8000];
+let pendingRequests = 0;
+let coldStartTimer;
+
+function startSlowRequestWatch() {
+  pendingRequests += 1;
+  if (pendingRequests > 1) return;
+  coldStartTimer = setTimeout(() => {
+    $("#loading-hint").textContent = COLD_START_MESSAGE;
+    $("#loading-hint").classList.remove("hidden");
+    const chatWait = $("#chat-wait");
+    if (chatWait) chatWait.textContent = COLD_START_MESSAGE;
+  }, COLD_START_NOTICE_MS);
+}
+
+function endSlowRequestWatch() {
+  pendingRequests = Math.max(0, pendingRequests - 1);
+  if (pendingRequests > 0) return;
+  clearTimeout(coldStartTimer);
+  $("#loading-hint").classList.add("hidden");
+}
+
+async function fetchWithRetry(url, options) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      // 서버가 깨어나는 동안의 연결 실패만 재시도한다. HTTP 오류 응답은 그대로 돌려준다.
+      if (attempt >= NETWORK_RETRY_DELAYS_MS.length) {
+        throw new Error("서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      }
+      await new Promise((resolve) => setTimeout(resolve, NETWORK_RETRY_DELAYS_MS[attempt]));
+    }
+  }
+}
+
+function warmUpServer() {
+  fetch(`${state.config.apiBaseUrl}/health`, { cache: "no-store" }).catch(() => {});
+}
 
 let toastTimer;
 function toast(message) {
@@ -64,7 +111,13 @@ async function authHeaders(extra = {}) {
 async function api(path, options = {}) {
   const isForm = options.body instanceof FormData;
   const headers = await authHeaders(isForm ? options.headers : { "Content-Type": "application/json", ...options.headers });
-  const response = await fetch(`${state.config.apiBaseUrl}${path}`, { ...options, headers });
+  startSlowRequestWatch();
+  let response;
+  try {
+    response = await fetchWithRetry(`${state.config.apiBaseUrl}${path}`, { ...options, headers });
+  } finally {
+    endSlowRequestWatch();
+  }
   if (response.status === 204) return null;
   const type = response.headers.get("content-type") || "";
   const payload = type.includes("application/json") ? await response.json() : await response.text();
@@ -141,6 +194,21 @@ function renderSummary() {
   $("#goal-caption").textContent = goal
     ? "목표는 최근 흐름에 맞춰 매주 다시 제안해요."
     : "기록이 쌓이면 무리 없는 목표를 추천할게요.";
+  renderChatSummary();
+}
+
+function renderChatSummary() {
+  const summary = state.summary;
+  const { activity } = summary;
+  $("#chat-summary-period").textContent = summary.period_start
+    ? `${summary.period_start} ~ ${summary.period_end}`
+    : "기록 없음";
+  $("#chat-summary-count").textContent = `${formatNumber(summary.count)}개`;
+  $("#chat-summary-average").textContent = activity.average_steps === null ? "—" : `${formatNumber(activity.average_steps)}보`;
+  $("#chat-summary-range").textContent = activity.max_steps === null
+    ? "—"
+    : `${formatNumber(activity.max_steps)} / ${formatNumber(activity.min_steps)}`;
+  $("#chat-summary-trend").textContent = summary.trend;
 }
 
 function chartTheme() {
@@ -198,7 +266,10 @@ function renderRecords() {
     return `<article class="record-item">
       <div class="record-date"><small>${year}</small>${month}.${day}</div>
       <div class="record-copy"><strong>${title}</strong><small>${detail}</small></div>
-      <button class="delete-record" data-delete-record="${item.id}" type="button" aria-label="${item.date} 기록 삭제">×</button>
+      <div class="record-actions">
+        <button class="edit-record" data-edit-record="${item.id}" type="button" aria-label="${item.date} 기록 수정">✎</button>
+        <button class="delete-record" data-delete-record="${item.id}" type="button" aria-label="${item.date} 기록 삭제">×</button>
+      </div>
     </article>`;
   }).join("");
 }
@@ -369,6 +440,80 @@ function setupEvents() {
     await hydrate();
   });
 
+  $("#manual-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const optionalNumber = (selector) => ($(selector).value === "" ? null : Number($(selector).value));
+    const payload = {
+      date: $("#manual-date").value,
+      value: Number($("#manual-steps").value),
+      memo: $("#manual-memo").value,
+      record_type: "activity",
+      source: "manual",
+      active_minutes: optionalNumber("#manual-minutes"),
+      activity_calories: optionalNumber("#manual-calories"),
+      distance_km: optionalNumber("#manual-distance"),
+    };
+    try {
+      try {
+        await api("/api/data", { method: "POST", body: JSON.stringify(payload) });
+      } catch (error) {
+        if (error.status !== 409 || !confirm("같은 날짜의 활동 기록이 있어요. 새 값으로 바꿀까요?")) return toast(error.message);
+        await api("/api/data?overwrite=true", { method: "POST", body: JSON.stringify(payload) });
+      }
+      toast("활동 기록을 추가했어요.");
+      $("#manual-form").reset();
+      $("#manual-date").value = todaySeoul();
+      await hydrate();
+    } catch (error) { toast(error.message); }
+  });
+
+  $("#record-list").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-edit-record]");
+    if (!button) return;
+    const record = state.records.find((item) => item.id === button.dataset.editRecord);
+    if (!record) return;
+    const isActivity = record.record_type === "activity";
+    state.editingId = record.id;
+    $("#edit-title").textContent = isActivity ? "활동 기록" : "체중 기록";
+    $("#edit-value-label").textContent = isActivity ? "걸음 수" : "체중(kg)";
+    $("#edit-value").min = isActivity ? 0 : 30;
+    $("#edit-value").max = isActivity ? 200000 : 300;
+    $("#edit-date").value = record.date;
+    $("#edit-date").max = todaySeoul();
+    $("#edit-value").value = record.value;
+    $("#edit-memo").value = record.memo || "";
+    $("#edit-minutes").value = record.active_minutes ?? "";
+    $("#edit-calories").value = record.activity_calories ?? "";
+    $("#edit-distance").value = record.distance_km ?? "";
+    $("#edit-activity-fields").classList.toggle("hidden", !isActivity);
+    $("#edit-dialog").showModal();
+  });
+
+  $("#edit-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (event.submitter?.value === "cancel") return $("#edit-dialog").close();
+    const record = state.records.find((item) => item.id === state.editingId);
+    if (!record) return;
+    const payload = {
+      date: $("#edit-date").value,
+      value: Number($("#edit-value").value),
+      memo: $("#edit-memo").value,
+    };
+    if (record.record_type === "activity") {
+      const optionalNumber = (selector) => ($(selector).value === "" ? null : Number($(selector).value));
+      payload.active_minutes = optionalNumber("#edit-minutes");
+      payload.activity_calories = optionalNumber("#edit-calories");
+      payload.distance_km = optionalNumber("#edit-distance");
+    }
+    try {
+      await api(`/api/data/${record.id}`, { method: "PUT", body: JSON.stringify(payload) });
+      $("#edit-dialog").close();
+      state.editingId = null;
+      toast("기록을 수정했어요.");
+      await hydrate();
+    } catch (error) { toast(error.message); }
+  });
+
   $("#record-list").addEventListener("click", async (event) => {
     const button = event.target.closest("[data-delete-record]");
     if (!button || !confirm("이 기록을 삭제할까요?")) return;
@@ -378,6 +523,7 @@ function setupEvents() {
 
   $("#weight-form").addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (event.submitter?.value === "cancel") return $("#weight-dialog").close();
     const payload = {
       date: $("#weight-date").value,
       value: Number($("#weight-value").value),
@@ -489,8 +635,11 @@ async function init() {
   document.documentElement.dataset.theme = preferred;
   $("#record-date").value = todaySeoul();
   $("#weight-date").value = todaySeoul();
+  $("#manual-date").value = todaySeoul();
+  $("#manual-date").max = todaySeoul();
   setupEvents();
   state.config = await loadConfig();
+  warmUpServer();
   await setupAuth();
 }
 

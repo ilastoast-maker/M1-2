@@ -115,12 +115,35 @@
             <button class="button button-primary button-wide" type="submit">이 기록 저장하기</button>
           </form>
 
+          <form id="manual-form" class="form-panel">
+            <div class="panel-title"><div><span>사진 없이</span><h3>활동 직접 입력</h3></div></div>
+            <div class="form-grid">
+              <label>날짜<input id="manual-date" type="date" required /></label>
+              <label>걸음 수<input id="manual-steps" type="number" min="0" max="200000" required /></label>
+              <label>활동 시간(분)<input id="manual-minutes" type="number" min="0" max="1440" placeholder="선택 사항" /></label>
+              <label>활동 칼로리<input id="manual-calories" type="number" min="0" max="20000" step="0.1" placeholder="선택 사항" /></label>
+              <label>이동 거리(km)<input id="manual-distance" type="number" min="0" max="1000" step="0.01" placeholder="선택 사항" /></label>
+              <label>메모<input id="manual-memo" maxlength="500" placeholder="선택 사항" /></label>
+            </div>
+            <button class="button button-primary button-wide" type="submit">기록 추가</button>
+          </form>
+
           <div class="section-heading compact"><div><p class="eyebrow">내 데이터</p><h2>최근 기록</h2></div><button id="download-csv" class="button button-small button-quiet" type="button">CSV 받기</button></div>
           <div id="record-list" class="record-list"><p class="empty-state">기록을 불러오는 중이에요.</p></div>
         </section>
 
         <section id="page-chat" class="page chat-page" data-page="chat" aria-labelledby="chat-title">
           <div class="section-heading"><div><p class="eyebrow">기록 기반 대화</p><h2 id="chat-title">일어나에게 물어보기</h2></div></div>
+          <article id="chat-summary" class="chat-summary" aria-label="AI가 참고하는 데이터 요약">
+            <p class="eyebrow">AI가 참고하는 내 데이터 요약</p>
+            <dl>
+              <div><dt>기간</dt><dd id="chat-summary-period">—</dd></div>
+              <div><dt>기록 수</dt><dd id="chat-summary-count">—</dd></div>
+              <div><dt>평균 걸음</dt><dd id="chat-summary-average">—</dd></div>
+              <div><dt>최대 / 최소</dt><dd id="chat-summary-range">—</dd></div>
+            </dl>
+            <p id="chat-summary-trend" class="chat-summary-trend">기록을 불러오는 중이에요.</p>
+          </article>
           <div id="chat-messages" class="chat-messages" aria-live="polite">
             <div class="message assistant">최근 운동 기록을 바탕으로 궁금한 점을 물어보세요.</div>
           </div>
@@ -180,7 +203,7 @@
 
     <dialog id="weight-dialog" class="dialog-card">
       <form id="weight-form" method="dialog">
-        <div class="dialog-heading"><div><p class="eyebrow">가볍게 체크인</p><h2>체중 기록</h2></div><button class="icon-button" value="cancel" aria-label="닫기">×</button></div>
+        <div class="dialog-heading"><div><p class="eyebrow">가볍게 체크인</p><h2>체중 기록</h2></div><button class="icon-button" value="cancel" formnovalidate aria-label="닫기">×</button></div>
         <label>날짜<input id="weight-date" type="date" required /></label>
         <label>체중(kg)<input id="weight-value" type="number" min="30" max="300" step="0.1" required /></label>
         <label>메모<input id="weight-memo" maxlength="500" placeholder="선택 사항" /></label>
@@ -188,7 +211,22 @@
       </form>
     </dialog>
 
-    <div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="polite"><span class="loader"></span><p id="loading-text">잠시만 기다려 주세요.</p></div>
+    <dialog id="edit-dialog" class="dialog-card">
+      <form id="edit-form" method="dialog">
+        <div class="dialog-heading"><div><p class="eyebrow">기록 수정</p><h2 id="edit-title">기록</h2></div><button class="icon-button" value="cancel" formnovalidate aria-label="닫기">×</button></div>
+        <label>날짜<input id="edit-date" type="date" required /></label>
+        <label><span id="edit-value-label">값</span><input id="edit-value" type="number" min="0" step="0.1" required /></label>
+        <div id="edit-activity-fields" class="form-grid">
+          <label>활동 시간(분)<input id="edit-minutes" type="number" min="0" max="1440" /></label>
+          <label>활동 칼로리<input id="edit-calories" type="number" min="0" max="20000" step="0.1" /></label>
+          <label>이동 거리(km)<input id="edit-distance" type="number" min="0" max="1000" step="0.01" /></label>
+        </div>
+        <label>메모<input id="edit-memo" maxlength="500" placeholder="선택 사항" /></label>
+        <button class="button button-primary button-wide" value="default" type="submit">수정 저장</button>
+      </form>
+    </dialog>
+
+    <div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="polite"><span class="loader"></span><p id="loading-text">잠시만 기다려 주세요.</p><p id="loading-hint" class="loading-hint hidden"></p></div>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
   </body>
 </html>

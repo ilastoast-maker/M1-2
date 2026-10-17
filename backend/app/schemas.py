@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, date as Date, datetime
 from enum import StrEnum
 from zoneinfo import ZoneInfo
 
@@ -83,7 +83,7 @@ class DataCreate(DataRecordBase):
 
 
 class DataUpdate(BaseModel):
-    date: date | None = None
+    date: Date | None = None
     value: float | None = Field(default=None, ge=0, le=1_000_000)
     memo: str | None = Field(default=None, max_length=500)
     active_minutes: int | None = Field(default=None, ge=0, le=1440)

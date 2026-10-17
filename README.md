@@ -10,7 +10,8 @@
 
 - Google 로그인과 사용자별 데이터 분리
 - 삼성 헬스 일일 활동 스크린샷 AI 추출 및 저장 전 확인
-- 활동·체중 데이터 CRUD와 통계 요약
+- 활동·체중 데이터 CRUD(직접 입력·수정·삭제)와 통계 요약
+- 채팅 화면 상단에 AI가 참고하는 데이터 요약(기간·개수·평균·최대/최소·추세) 표시
 - 기록 요약을 시스템 지침에 주입한 AI 운동 채팅
 - 사용자당 하나의 연속 대화 자동 저장·복원·초기화
 - 최근 흐름을 반영한 100보 단위 주간 걸음 목표 제안
@@ -20,7 +21,7 @@
 
 ## 기술 스택
 
-- Backend: Python 3.10+, FastAPI, Pydantic v2, Firebase Admin SDK
+- Backend: Python 3.11+, FastAPI, Pydantic v2, Firebase Admin SDK
 - Database/Auth: Firebase Authentication, Cloud Firestore
 - AI: OpenAI Responses API의 이미지 입력 및 Structured Outputs
 - Frontend: Vanilla HTML, CSS, JavaScript, Chart.js
@@ -86,7 +87,7 @@ npx serve public -l 5500
 
 ```bash
 cd backend
-pytest -q
+python -m pytest -q
 ```
 
 ## 삼성 헬스 기존 기록 가져오기
@@ -167,7 +168,11 @@ conversations/{uid}/messages/{messageId}
 - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Health Check: `/health`
 
-무료 티어는 첫 요청이 느릴 수 있으므로 UI에서 로딩 상태를 유지하고 재시도 가능한 오류를 표시합니다.
+무료 티어는 15분간 요청이 없으면 잠들어 첫 요청이 30~60초 걸릴 수 있습니다. 프론트엔드는 다음과 같이 대응합니다.
+
+- 페이지를 열자마자 `/health`로 서버를 미리 깨웁니다.
+- 요청이 4초 이상 걸리면 로딩 화면과 채팅 대기 말풍선에 "서버가 잠에서 깨어나는 중" 안내를 표시합니다.
+- 서버가 깨어나는 동안의 연결 실패는 3초, 8초 간격으로 두 번 자동 재시도하고, 그래도 실패하면 다시 시도하라는 안내를 띄웁니다.
 
 ### Vercel
 
